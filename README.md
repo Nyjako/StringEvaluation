@@ -20,8 +20,8 @@ std::cout << KT::StringEvaluation::resolveMath("5+6-N7") << std::endl; // 5+6--7
 - `*` \- Multiplication
 - `/` \- Division
 - `N` - Negative: N100 = **-100**
-- `P` - Pow: 2P2 = ![equation](http://www.sciweavers.org/tex2img.php?eq=2%5E2&bc=Transparent&fc=Black&im=png&fs=12&ff=arev&edit=0)
-- `S` - Sqrt: 2S4 = ![equation](http://www.sciweavers.org/tex2img.php?eq=2%20%5Csurd%204&bc=Transparent&fc=Black&im=png&fs=12&ff=arev&edit=0)
+- `P` - Pow: 2P2 = ![equation](http://www.sciweavers.org/tex2img.php?eq=2%5E2&bc=Black&fc=White&im=png&fs=12&ff=arev&edit=0)
+- `S` - Sqrt: 2S4 = **√4**
 - `( )` \- Brackets
 
 # Warning!
