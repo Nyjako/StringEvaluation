@@ -32,6 +32,11 @@ namespace KT
 			return c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9' || c == '.' || c == 'N';
 		}
 
+		static bool isMathSymbol(char c)
+		{
+			return c == 'P' || c == 'S' || c == '*' || c == '/' || c == '-' || c == '+';
+		}
+
 		static std::string replacePart(std::string base, int delFirstIndex, int delLastIndex, std::string replaceString) // Replace part of string with other string
 		{
 			std::string s = "";
@@ -88,63 +93,95 @@ namespace KT
 			return base;
 		}
 
+		static bool checkString(std::string expresion)
+		{
+			if (expresion.empty()) return false;
+			if (isMathSymbol(expresion[0])) return false;
+
+			int brackets = 0;
+			bool number = true;
+
+			for (char c : expresion)
+			{
+				if (!isNumber(c) && !isMathSymbol(c) && c != '(' && c != ')') return false;
+
+				if (c == '(')      brackets++;
+				else if (c == ')') brackets--;
+
+				if (isMathSymbol(c))
+				{
+					if (number == false) return false;
+					number = false;
+				}
+				else number = true;
+			}
+
+			if (brackets != 0 || !number) return false;
+
+			return true;
+		}
+
 	public:
 		static double resolveMath(std::string expresion)
 		{
-			std::string tempExpression = clearWhitespaces(expresion);
-			int counter = 0;
-			std::string s = "";
-			bool started = false;
-			int startPoint, endPoint;
-			for (int i = 0; i < tempExpression.size(); i++) // Brackets
+			if (checkString(expresion))
 			{
-				char c = tempExpression[i];
-				if (c == '(')
+				std::string tempExpression = clearWhitespaces(expresion);
+				int counter = 0;
+				std::string s = "";
+				bool started = false;
+				int startPoint, endPoint;
+				for (int i = 0; i < tempExpression.size(); i++) // Brackets
 				{
-					counter++;
-					if (!started)
+					char c = tempExpression[i];
+					if (c == '(')
 					{
-						started = true;
-						startPoint = i;
+						counter++;
+						if (!started)
+						{
+							started = true;
+							startPoint = i;
+						}
 					}
-				}
-				else if (c == ')')
-				{
-					counter--;
-					if (started && counter == 0 && s != "")
+					else if (c == ')')
 					{
-						tempExpression = replacePart(tempExpression, startPoint, i, std::to_string(resolveMath(removeF(s))));
-						started = false;
+						counter--;
+						if (started && counter == 0 && s != "")
+						{
+							tempExpression = replacePart(tempExpression, startPoint, i, std::to_string(resolveMath(removeF(s))));
+							started = false;
+							i = 0;
+							s = "";
+						}
+					}
+					if (started) s += c;
+				}
+
+				for (int i = 0; i < tempExpression.size(); i++) // pow / sqrt
+					if (tempExpression[i] == 'P' || tempExpression[i] == 'S')
+					{
+						double* temp = getExp(tempExpression, i, startPoint, endPoint);
+						tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == 'P') ? pow(temp[0], temp[1]) : pow(temp[1], 1 / temp[0])));
 						i = 0;
-						s = "";
 					}
-				}
-				if (started) s += c;
+				for (int i = 0; i < tempExpression.size(); i++) // Multiplication / Division
+					if (tempExpression[i] == '*' || tempExpression[i] == '/')
+					{
+						double* temp = getExp(tempExpression, i, startPoint, endPoint);
+						tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == '*') ? temp[0] * temp[1] : temp[0] / temp[1]));
+						i = 0;
+					}
+				for (int i = 0; i < tempExpression.size(); i++) // Addition / Subtraction
+					if (tempExpression[i] == '+' || tempExpression[i] == '-')
+					{
+						double* temp = getExp(tempExpression, i, startPoint, endPoint);
+						tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == '+') ? temp[0] + temp[1] : temp[0] - temp[1]));
+						i = 0;
+					}
+
+				return std::stod(cutZeros(tempExpression));
 			}
-
-			for (int i = 0; i < tempExpression.size(); i++) // pow / sqrt
-				if (tempExpression[i] == 'P' || tempExpression[i] == 'S')
-				{
-					double* temp = getExp(tempExpression, i, startPoint, endPoint);
-					tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == 'P') ? pow(temp[0], temp[1]) : pow(temp[1], 1 / temp[0])));
-					i = 0;
-				}
-			for (int i = 0; i < tempExpression.size(); i++) // Multiplication / Division
-				if (tempExpression[i] == '*' || tempExpression[i] == '/')
-				{
-					double* temp = getExp(tempExpression, i, startPoint, endPoint);
-					tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == '*') ? temp[0] * temp[1] : temp[0] / temp[1]));
-					i = 0;
-				}
-			for (int i = 0; i < tempExpression.size(); i++) // Addition / Subtraction
-				if (tempExpression[i] == '+' || tempExpression[i] == '-')
-				{
-					double* temp = getExp(tempExpression, i, startPoint, endPoint);
-					tempExpression = replacePart(tempExpression, startPoint, endPoint, std::to_string((tempExpression[i] == '+') ? temp[0] + temp[1] : temp[0] - temp[1]));
-					i = 0;
-				}
-
-			return std::stod(cutZeros(tempExpression));
+			else return INFINITY;
 		}
 	};
 }
